@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "laravel-best-practices": {
+      "source": "laravel/boost",
+      "sourceType": "github",
+      "skillPath": ".ai/laravel/skill/laravel-best-practices/SKILL.md",
+      "computedHash": "63c017c8386946e4da0aef97622211d216acdaaec14939e166d5c8c2b4161563"
+    },
+    "laravel-livewire": {
+      "source": "fusengine/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/laravel-expert/skills/laravel-livewire/SKILL.md",
+      "computedHash": "4eedada2fdb13c8abb2c551ce8bf39c283a541ee992f47156b71056f8574e322"
+    },
+    "laravel-patterns": {
+      "source": "affaan-m/ecc",
+      "sourceType": "github",
+      "skillPath": "skills/laravel-patterns/SKILL.md",
+      "computedHash": "58d3d0c9c98dff80c4a4e0d28e7b3ddf8cbb2b941338a4d3780aff53f52f146e"
+    },
+    "livewire-flux": {
+      "source": "nasrulhazim/claude",
+      "sourceType": "github",
+      "skillPath": "skills/livewire-flux/SKILL.md",
+      "computedHash": "d61836934adb9aa4b46deeb5ecec68516e9bee0e71318602ef3cd24ba7eaf8d4"
+    }
+  }
+}
