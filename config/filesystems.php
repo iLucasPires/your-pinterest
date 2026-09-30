@@ -38,6 +38,23 @@ return [
             'report' => false,
         ],
 
+        'photos' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/photos'),
+            'visibility' => 'private',
+            'serve' => false,
+            'throw' => true,
+        ],
+
+        // Retained only to remove copies created by the previous implementation.
+        'gallery_photos' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/gallery-photos'),
+            'serve' => false,
+            'throw' => true,
+            'report' => true,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

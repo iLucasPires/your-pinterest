@@ -3,13 +3,15 @@
 namespace Tests\Feature\Gallery;
 
 use App\Actions\Gallery\SyncGalleryFromDrive;
-use App\Models\Gallery\Gallery;
 use App\DTOs\DriveFileDTO;
-use App\Services\Google\GoogleDriveProvider;
-use App\Services\Google\GoogleDriveProviderFactory;
+use App\Jobs\GeneratePhotoVariants;
+use App\Models\Gallery\Gallery;
 use App\Models\Gallery\Photo;
 use App\Models\User;
+use App\Services\Google\GoogleDriveProvider;
+use App\Services\Google\GoogleDriveProviderFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Mockery;
 use Tests\TestCase;
 
@@ -17,23 +19,30 @@ class SyncGalleryTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Queue::fake();
+    }
+
     public function test_sync_creates_photos_from_drive(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $gallery = Gallery::factory()
             ->for($user)
             ->withFolder('drive-folder-id')
             ->create();
 
         $driveFile = new DriveFileDTO(
-            id:           'file-1',
-            name:         'IMG_0001.jpg',
-            mimeType:     'image/jpeg',
-            size:         1024000,
-            width:        3000,
-            height:       2000,
+            id: 'file-1',
+            name: 'IMG_0001.jpg',
+            mimeType: 'image/jpeg',
+            size: 1024000,
+            width: 3000,
+            height: 2000,
             thumbnailUrl: 'https://drive.google.com/thumb/file-1',
-            modifiedAt:   new \DateTimeImmutable('2026-01-01'),
+            modifiedAt: new \DateTimeImmutable('2026-01-01'),
         );
 
         $this->mockDriveProvider($user, [$driveFile]);
@@ -44,17 +53,19 @@ class SyncGalleryTest extends TestCase
         $this->assertEquals(0, $result->removed);
 
         $this->assertDatabaseHas('photos', [
-            'gallery_id'    => $gallery->id,
+            'gallery_id' => $gallery->id,
             'drive_file_id' => 'file-1',
-            'filename'      => 'IMG_0001.jpg',
-            'width'         => 3000,
-            'height'        => 2000,
+            'filename' => 'IMG_0001.jpg',
+            'width' => 3000,
+            'height' => 2000,
         ]);
+
+        Queue::assertPushed(GeneratePhotoVariants::class, 1);
     }
 
     public function test_sync_removes_photos_deleted_from_drive(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $gallery = Gallery::factory()
             ->for($user)
             ->withFolder('drive-folder-id')
@@ -62,10 +73,10 @@ class SyncGalleryTest extends TestCase
 
         // A photo that exists in DB but not in Drive anymore
         Photo::create([
-            'gallery_id'    => $gallery->id,
+            'gallery_id' => $gallery->id,
             'drive_file_id' => 'deleted-file',
-            'filename'      => 'deleted.jpg',
-            'sort_order'    => 0,
+            'filename' => 'deleted.jpg',
+            'sort_order' => 0,
         ]);
 
         $this->mockDriveProvider($user, []); // Drive returns no files
@@ -80,28 +91,28 @@ class SyncGalleryTest extends TestCase
 
     public function test_sync_updates_metadata_for_existing_photos(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $gallery = Gallery::factory()
             ->for($user)
             ->withFolder('drive-folder-id')
             ->create();
 
         Photo::create([
-            'gallery_id'    => $gallery->id,
+            'gallery_id' => $gallery->id,
             'drive_file_id' => 'file-1',
-            'filename'      => 'old-name.jpg',
-            'sort_order'    => 0,
+            'filename' => 'old-name.jpg',
+            'sort_order' => 0,
         ]);
 
         $updated = new DriveFileDTO(
-            id:           'file-1',
-            name:         'new-name.jpg',
-            mimeType:     'image/jpeg',
-            size:         2000,
-            width:        1920,
-            height:       1080,
+            id: 'file-1',
+            name: 'new-name.jpg',
+            mimeType: 'image/jpeg',
+            size: 2000,
+            width: 1920,
+            height: 1080,
             thumbnailUrl: null,
-            modifiedAt:   null,
+            modifiedAt: null,
         );
 
         $this->mockDriveProvider($user, [$updated]);
@@ -113,13 +124,13 @@ class SyncGalleryTest extends TestCase
 
         $this->assertDatabaseHas('photos', [
             'drive_file_id' => 'file-1',
-            'filename'      => 'new-name.jpg',
+            'filename' => 'new-name.jpg',
         ]);
     }
 
     public function test_sync_updates_last_synced_at(): void
     {
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
         $gallery = Gallery::factory()
             ->for($user)
             ->withFolder('folder-id')

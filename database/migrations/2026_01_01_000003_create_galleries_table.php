@@ -17,8 +17,8 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('drive_folder_id')->nullable();
             $table->string('drive_folder_name')->nullable();
-            $table->string('access_type')->default('public'); // public | code
-            $table->string('access_code_hash')->nullable();   // bcrypt hash of 6-digit code
+            $table->string('access_type')->default('public'); // public | link | private
+            $table->string('access_code_hash')->nullable();
             $table->boolean('is_published')->default(false);
             $table->timestamp('published_at')->nullable();
             $table->timestamp('last_synced_at')->nullable();

@@ -46,6 +46,7 @@ class GallerySearch extends Component
         return Gallery::query()
             ->with('client')
             ->where('is_published', true)
+            ->publiclyDiscoverable()
             ->where(function ($galleryQuery) use ($search): void {
                 $galleryQuery
                     ->where('name', 'like', "%{$search}%")
@@ -69,6 +70,7 @@ class GallerySearch extends Component
         $gallery = Gallery::query()
             ->whereKey($galleryId)
             ->where('is_published', true)
+            ->publiclyDiscoverable()
             ->firstOrFail();
 
         return redirect()->route('gallery.show', $gallery->slug);

@@ -1,4 +1,4 @@
-@props(['gallery'])
+@props(['gallery', 'showLogin' => false])
 
 <flux:modal
     name="gallery-access"
@@ -6,45 +6,29 @@
     :dismissible="false"
     :escapable="false"
     :closable="false"
-    class="w-full max-w-sm"
+    class="w-full max-w-sm space-y-8"
 >
     <div class="mx-auto max-w-64 space-y-2 text-center">
-        <flux:heading id="access-title" size="xl">
+        <flux:heading size="xl">
             {{ $gallery->name }}
         </flux:heading>
 
-        <flux:text id="access-description">
-            Enter the access code to view these photographs.
+        <flux:text>
+            Entre com sua conta Google usando o e-mail autorizado para acessar esta galeria.
         </flux:text>
     </div>
 
-    <form
-        method="POST"
-        action="{{ route('gallery.access.store', $gallery->slug) }}"
-        @class(['mt-6', 'space-y-4'])
-    >
-        @csrf
-
-        <flux:otp
-            id="code"
-            name="code"
-            wire:model="code"
-            length="6"
-            label="OTP Code"
-            label:sr-only
-            :error:icon="false"
-            error:class="text-center"
-            class="mx-auto"
-        />
-
-        @error('code')
-            <flux:text id="code-error">
-                {{ $message }}
-            </flux:text>
+    <div class="space-y-2">
+        @error('email')
+            <flux:text class="mt-4 text-center" role="alert">{{ $message }}</flux:text>
         @enderror
 
-        <flux:button type="submit" class="w-full" variant="primary">
-            Continue
+        <flux:button href="{{ route('gallery.login.google', $gallery->slug) }}" variant="primary" class="w-full">
+            Continuar com Google
         </flux:button>
-    </form>
+
+        <flux:text size="xs" class="text-center">
+            Para baixar os originais, entre no Google Drive com o mesmo e-mail autorizado.
+        </flux:text>
+    </div>
 </flux:modal>

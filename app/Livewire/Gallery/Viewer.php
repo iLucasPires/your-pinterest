@@ -5,12 +5,11 @@ namespace App\Livewire\Gallery;
 use App\Models\Gallery\Gallery as GalleryModel;
 use App\Models\Gallery\Photo;
 use App\Models\Gallery\PhotoTag;
-
+use App\Services\Gallery\GalleryAccessService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\View\View;
-
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
@@ -22,9 +21,6 @@ class Viewer extends Component
     #[Locked]
     public int $galleryId;
 
-    #[Locked]
-    public bool $locked = false;
-
     #[Url(as: 'q', except: '')]
     #[Validate('string|max:255')]
     public string $search = '';
@@ -35,8 +31,6 @@ class Viewer extends Component
     public function mount(int $galleryId): void
     {
         $this->galleryId = $galleryId;
-        $this->locked = $this->gallery->isProtected()
-            && ! request()->session()->has("gallery_access_{$galleryId}");
 
         // Força a resolução da galeria (404 se não publicada).
         $this->gallery;
@@ -69,6 +63,16 @@ class Viewer extends Component
         return $gallery;
     }
 
+    #[Computed]
+    public function locked(): bool
+    {
+        return ! app(GalleryAccessService::class)->canViewContent(
+            $this->gallery,
+            request()->user(),
+            request()->session(),
+        );
+    }
+
     /** @return Collection<int, Photo> */
     #[Computed]
     public function photos(): Collection
@@ -83,7 +87,13 @@ class Viewer extends Component
         $this->applySearch($query);
 
         return $query->get()->each(function (Photo $photo): void {
-            $photo->setAttribute('preview_url', $photo->previewUrl());
+            $photo->setRelation('gallery', $this->gallery);
+            $previewUrl = $photo->previewUrl();
+            $photo->setAttribute('preview_url', $previewUrl);
+            $photo->setAttribute(
+                'thumbnail_url',
+                $photo->displayThumbnailUrl(),
+            );
             $photo->setAttribute(
                 'download_url',
                 route('gallery.photo.download', [$this->gallery->slug, $photo->id]),
@@ -111,7 +121,7 @@ class Viewer extends Component
     #[Computed]
     public function totalPhotoCount(): int
     {
-        return $this->gallery->photos()->count();
+        return $this->locked ? 0 : $this->gallery->photos()->count();
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -140,7 +150,7 @@ class Viewer extends Component
                         ])
                         ->values()
                         ->all(),
-                    'thumbnail' => $photo->thumbnail_url ?: $previewUrl,
+                    'thumbnail' => $photo->displayThumbnailUrl(),
                     'preview_url' => $previewUrl,
                     'download_url' => route('gallery.photo.download', [$slug, $photo->id]),
                 ];

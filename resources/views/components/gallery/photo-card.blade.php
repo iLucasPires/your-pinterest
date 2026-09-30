@@ -1,6 +1,7 @@
 @props(['photo', 'index'])
 
 <div
+    {{ $attributes }}
     class="group relative mb-4 block cursor-zoom-in break-inside-avoid overflow-hidden rounded-xl shadow-sm transition hover:shadow-lg"
     aria-label="Abrir {{ $photo->filename }}"
     data-index="{{ $index }}"
@@ -11,7 +12,7 @@
     x-on:keydown.space.prevent="openLightbox({{ $index }})"
 >
     <img
-        src="{{ $photo->preview_url }}"
+        src="{{ $photo->thumbnail_url }}"
         alt="{{ $photo->filename }}"
         loading="lazy"
         decoding="async"
@@ -19,7 +20,7 @@
             height="{{ $photo->height }}"
             style="aspect-ratio: {{ $photo->width }} / {{ $photo->height }};" @endif
         class="block h-auto w-full transition duration-500 ease-out group-hover:scale-[1.015]"
-        onerror="if (this.src !== '{{ $photo->thumbnail_url }}') { this.src = '{{ $photo->thumbnail_url }}'; }"
+        onerror="this.onerror = null; this.src = '{{ asset('images/photo-pending.svg') }}';"
     >
 
     {{-- Hover overlay --}}

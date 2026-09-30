@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\GalleryResource\RelationManagers;
 
+use App\Models\Gallery\Photo;
 use App\Models\Gallery\PhotoTag;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -93,6 +94,7 @@ class PhotosRelationManager extends RelationManager
             ->recordTitleAttribute('filename')
             ->columns([
                 ImageColumn::make('thumbnail_url')
+                    ->state(fn (Photo $record): string => route('gallery.photo.admin-thumbnail', $record))
                     ->label('Foto')
                     ->square()
                     ->size(60),

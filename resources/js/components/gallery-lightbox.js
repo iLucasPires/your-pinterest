@@ -65,24 +65,11 @@ export default function galleryLightbox(initialPhotos = []) {
         },
 
         lightboxSource() {
+            if (!this.lightboxOpen) return null;
+
             const photo = this.currentPhoto();
 
-            if (!photo) return '';
-
-            return photo.thumbnail?.includes('googleusercontent.com')
-                ? photo.thumbnail.replace(/=s\d+/, '=s1600')
-                : photo.preview_url;
-        },
-
-        handleImageError(event) {
-            const photo = this.currentPhoto();
-
-            if (
-                photo &&
-                event.target.src !== photo.preview_url
-            ) {
-                event.target.src = photo.preview_url;
-            }
+            return photo?.preview_url || photo?.thumbnail || '';
         },
 
         handleKeydown(event) {

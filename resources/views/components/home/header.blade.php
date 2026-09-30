@@ -4,13 +4,4 @@
             <flux:icon name="camera" variant="micro" />
         </x-slot>
     </flux:brand>
-
-    <flux:button
-        href="{{ url('/admin') }}"
-        variant="ghost"
-        size="sm"
-        icon="lock-open"
-    >
-        Área do fotógrafo
-    </flux:button>
 </header>

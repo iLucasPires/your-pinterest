@@ -10,6 +10,10 @@ use App\Services\StorageProvider;
 
 use Google\Client;
 use Google\Service\Drive;
+use Google\Service\Drive\Permission;
+use Google\Service\Exception as GoogleServiceException;
+use RuntimeException;
+use Throwable;
 
 class GoogleDriveProvider implements StorageProvider
 {
@@ -18,6 +22,26 @@ class GoogleDriveProvider implements StorageProvider
     public function __construct(private readonly GoogleConnection $connection)
     {
         $client = new Client();
+        $client->setConfig('retry', [
+            'retries' => 2,
+            'initial_delay' => 1,
+            'max_delay' => 5,
+            'factor' => 2,
+        ]);
+        $client->setConfig('retry_map', [
+            429 => 2,
+            500 => 2,
+            502 => 2,
+            503 => 2,
+            504 => 2,
+            'rateLimitExceeded' => 2,
+            'userRateLimitExceeded' => 2,
+            6 => 2,
+            7 => 2,
+            28 => 2,
+            35 => 2,
+            52 => 2,
+        ]);
         $client->setClientId(config('services.google.client_id'));
         $client->setClientSecret(config('services.google.client_secret'));
         $client->setRedirectUri(config('services.google.redirect'));
@@ -106,7 +130,7 @@ class GoogleDriveProvider implements StorageProvider
                     'fields' => 'id, name',
                 ]);
                 $parentNames[$parentId] = $parent->getName();
-            } catch (\Throwable) {
+            } catch (Throwable) {
                 // Root or shared drive — skip silently
             }
         }
@@ -176,7 +200,7 @@ class GoogleDriveProvider implements StorageProvider
             }
 
             return DriveFolderDTO::fromGoogleFile($file);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return null;
         }
     }
@@ -199,6 +223,135 @@ class GoogleDriveProvider implements StorageProvider
         $response = $this->drive->files->get($fileId, ['alt' => 'media']);
 
         return $response->getBody();
+    }
+
+    public function browserDownloadUrl(string $fileId): string
+    {
+        $file = $this->drive->files->get($fileId, [
+            'fields' => 'webContentLink',
+            'supportsAllDrives' => true,
+        ]);
+
+        return $file->getWebContentLink()
+            ?: throw new RuntimeException('Google Drive did not provide a download link.');
+    }
+
+    public function readerPermission(string $folderId, string $email): ?string
+    {
+        $pageToken = null;
+        do {
+            $page = $this->drive->permissions->listPermissions($folderId, [
+                'fields' => 'nextPageToken,permissions(id,type,emailAddress)',
+                'supportsAllDrives' => true,
+                'pageToken' => $pageToken,
+            ]);
+            foreach ($page->getPermissions() as $permission) {
+                $isUserPermission = $permission->getType() === 'user';
+                $permissionEmail = $permission->getEmailAddress() ?? '';
+                $matchesEmail = strcasecmp($permissionEmail, $email) === 0;
+
+                if ($isUserPermission && $matchesEmail) {
+                    return $permission->getId();
+                }
+            }
+            $pageToken = $page->getNextPageToken();
+        } while ($pageToken);
+
+        return null;
+    }
+
+    /** @return list<Permission> */
+    private function publicPermissions(string $folderId): array
+    {
+        $permissions = [];
+        $pageToken = null;
+
+        do {
+            $page = $this->drive->permissions->listPermissions($folderId, [
+                'fields' => 'nextPageToken,permissions(id,type,permissionDetails(inherited))',
+                'supportsAllDrives' => true,
+                'pageToken' => $pageToken,
+            ]);
+
+            foreach ($page->getPermissions() as $permission) {
+                if ($permission->getType() === 'anyone') {
+                    $permissions[] = $permission;
+                }
+            }
+
+            $pageToken = $page->getNextPageToken();
+        } while ($pageToken);
+
+        return $permissions;
+    }
+
+    public function syncPublicAccess(string $folderId, bool $public): ?string
+    {
+        $permissions = $this->publicPermissions($folderId);
+
+        if ($public) {
+            $reader = new Permission([
+                'role' => 'reader',
+                'allowFileDiscovery' => false,
+            ]);
+            $options = ['fields' => 'id', 'supportsAllDrives' => true];
+
+            if ($permissions) {
+                $permissionId = $permissions[0]->getId();
+                $permission = $this->drive->permissions->update($folderId, $permissionId, $reader, $options);
+            } else {
+                $reader->setType('anyone');
+                $permission = $this->drive->permissions->create($folderId, $reader, $options);
+            }
+
+            return $permission->getId();
+        }
+
+        foreach ($permissions as $permission) {
+            foreach ($permission->getPermissionDetails() ?? [] as $detail) {
+                if ($detail->getInherited()) {
+                    throw new RuntimeException("Folder {$folderId} inherits public access. Remove sharing on its parent in Google Drive.");
+                }
+            }
+
+            $this->revokeReader($folderId, $permission->getId());
+        }
+
+        if ($this->publicPermissions($folderId)) {
+            throw new RuntimeException("Folder {$folderId} still has public access in Google Drive.");
+        }
+
+        return null;
+    }
+
+    public function grantReader(string $folderId, string $email): string
+    {
+        $reader = new Permission([
+            'type' => 'user',
+            'role' => 'reader',
+            'emailAddress' => $email,
+        ]);
+
+        $options = [
+            'fields' => 'id',
+            'supportsAllDrives' => true,
+            'sendNotificationEmail' => false,
+        ];
+
+        $permission = $this->drive->permissions->create($folderId, $reader, $options);
+
+        return $permission->getId();
+    }
+
+    public function revokeReader(string $folderId, string $permissionId): void
+    {
+        try {
+            $this->drive->permissions->delete($folderId, $permissionId, ['supportsAllDrives' => true]);
+        } catch (GoogleServiceException $exception) {
+            if ($exception->getCode() !== 404) {
+                throw $exception;
+            }
+        }
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────

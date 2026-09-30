@@ -76,13 +76,13 @@ class HomeTest extends TestCase
             'gallery_id' => $publicGallery->id,
             'drive_file_id' => 'public-file',
             'filename' => 'public.jpg',
-            'thumbnail_url' => 'https://example.test/public.jpg',
+            'thumbnail_path' => 'public/thumbnail.webp',
         ]);
         Photo::create([
             'gallery_id' => $privateGallery->id,
             'drive_file_id' => 'private-file',
             'filename' => 'private.jpg',
-            'thumbnail_url' => 'https://example.test/private.jpg',
+            'thumbnail_path' => 'private/thumbnail.webp',
         ]);
 
         $response = $this->get(route('home'));

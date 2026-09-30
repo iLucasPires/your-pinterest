@@ -92,7 +92,7 @@
                 </span>
             </flux:button>
 
-            {{ $actions }}
+            {{ $actions ?? '' }}
         </div>
     </div>
 </header>

@@ -10,8 +10,7 @@
     <title>@yield('title', $title ?? config('app.name'))</title>
     <meta name="description" content="@yield('description', $description ?? '')">
 
-    {{-- Prevent indexing of private galleries --}}
-    <meta name="robots" content="noindex, nofollow">
+    <meta name="robots" content="@yield('robots', 'index, follow')">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 

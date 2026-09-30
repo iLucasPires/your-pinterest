@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ClientResource\Pages;
 use App\Models\Client;
+use App\Rules\ClientEmailNotPhotographer;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -36,7 +37,7 @@ class ClientResource extends Resource
     {
         return $schema->components([
             Section::make()
-                ->columns(2)
+                ->columnSpanFull()
                 ->schema([
                     TextInput::make('name')
                         ->required()
@@ -45,6 +46,8 @@ class ClientResource extends Resource
                     TextInput::make('email')
                         ->email()
                         ->maxLength(255)
+                        ->helperText('O cliente acessa as galerias com a conta Google deste e-mail.')
+                        ->rules([new ClientEmailNotPhotographer])
                         ->nullable(),
 
                     Textarea::make('notes')

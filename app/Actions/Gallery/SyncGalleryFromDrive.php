@@ -2,9 +2,11 @@
 
 namespace App\Actions\Gallery;
 
+use App\Jobs\GeneratePhotoVariants;
 use App\Models\Gallery\Gallery;
 use App\Models\Gallery\Photo;
 use App\Services\Google\GoogleDriveProviderFactory;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -13,7 +15,7 @@ use Illuminate\Support\Facades\DB;
  * - Creates photos that are new in Drive.
  * - Updates metadata for photos that exist in both.
  * - Removes photos that have been deleted from Drive.
- * - Does NOT download originals.
+ * - Queues optimized variants for new, changed or missing images.
  */
 class SyncGalleryFromDrive
 {
@@ -28,13 +30,15 @@ class SyncGalleryFromDrive
         }
 
         $photographer = $gallery->photographer;
-        $provider     = $this->factory->make($photographer);
-        $driveFiles   = $provider->listFiles($gallery->drive_folder_id);
+        $provider = $this->factory->make($photographer);
+        $driveFiles = $provider->listFiles($gallery->drive_folder_id);
 
-        $result = DB::transaction(function () use ($gallery, $driveFiles): SyncResult {
+        $photosToProcess = [];
+
+        $result = DB::transaction(function () use ($gallery, $driveFiles, &$photosToProcess): SyncResult {
             $driveIds = [];
-            $added    = 0;
-            $updated  = 0;
+            $added = 0;
+            $updated = 0;
 
             foreach ($driveFiles as $index => $file) {
                 $driveIds[] = $file->id;
@@ -43,38 +47,58 @@ class SyncGalleryFromDrive
                     ->where('drive_file_id', $file->id)
                     ->first();
 
+                $driveModifiedAt = $file->modifiedAt
+                    ? Carbon::instance(\DateTime::createFromImmutable($file->modifiedAt))
+                    : null;
+
                 $data = [
-                    'gallery_id'        => $gallery->id,
-                    'drive_file_id'     => $file->id,
-                    'filename'          => $file->name,
-                    'mime_type'         => $file->mimeType,
-                    'size'              => $file->size,
-                    'width'             => $file->width,
-                    'height'            => $file->height,
-                    'thumbnail_url'     => $file->thumbnailUrl,
-                    'drive_modified_at' => $file->modifiedAt
-                        ? \Carbon\Carbon::instance(\DateTime::createFromImmutable($file->modifiedAt))
-                        : null,
-                    'sort_order'        => $index,
+                    'gallery_id' => $gallery->id,
+                    'drive_file_id' => $file->id,
+                    'filename' => $file->name,
+                    'mime_type' => $file->mimeType,
+                    'size' => $file->size,
+                    'width' => $file->width,
+                    'height' => $file->height,
+                    'thumbnail_url' => null,
+                    'drive_modified_at' => $driveModifiedAt,
+                    'sort_order' => $index,
                 ];
 
                 if ($photo) {
                     $photo->update($data);
                     $updated++;
                 } else {
-                    Photo::create($data);
+                    $photo = Photo::create($data);
                     $added++;
+                }
+
+                if (! $photo->variantsAreCurrent()) {
+                    $photosToProcess[] = [
+                        'photo_id' => $photo->id,
+                        'source_hash' => $photo->variantSourceHash(),
+                    ];
                 }
             }
 
-            $removed = Photo::where('gallery_id', $gallery->id)
+            $removed = 0;
+            Photo::where('gallery_id', $gallery->id)
                 ->whereNotIn('drive_file_id', $driveIds)
-                ->delete();
+                ->lazyById()->each(function (Photo $photo) use (&$removed): void {
+                    $photo->delete();
+                    $removed++;
+                });
 
             $gallery->update(['last_synced_at' => now()]);
 
             return new SyncResult(added: $added, updated: $updated, removed: (int) $removed);
         });
+
+        foreach ($photosToProcess as $photoToProcess) {
+            GeneratePhotoVariants::dispatch(
+                $photoToProcess['photo_id'],
+                $photoToProcess['source_hash'],
+            )->afterCommit();
+        }
 
         return $result;
     }

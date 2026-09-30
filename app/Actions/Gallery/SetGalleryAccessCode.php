@@ -9,21 +9,14 @@ class SetGalleryAccessCode
 {
     /**
      * Hash and store a 6-digit access code on the gallery.
-     * Pass null to clear the code (and switch to public access).
+    * Pass null to clear the code without changing the selected access level.
      */
     public function handle(Gallery $gallery, ?string $plainCode): Gallery
     {
-        if ($plainCode !== null) {
-            $gallery->update([
-                'access_type'      => Gallery::ACCESS_CODE,
-                'access_code_hash' => Hash::make($plainCode),
-            ]);
-        } else {
-            $gallery->update([
-                'access_type'      => Gallery::ACCESS_PUBLIC,
-                'access_code_hash' => null,
-            ]);
-        }
+        $gallery->update([
+            'access_type' => Gallery::ACCESS_PRIVATE,
+            'access_code_hash' => $plainCode === null ? null : Hash::make($plainCode),
+        ]);
 
         return $gallery->fresh();
     }

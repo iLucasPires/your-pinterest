@@ -68,10 +68,25 @@ class GoogleDriveService
     public function searchFolders(User $user, string $query, int $limit = 50): array
     {
         $provider = $this->getProvider($user);
+        $matches = array_slice($provider->searchFolders($query), 0, $limit);
+        $folders = [];
+        $visited = [];
 
-        $folders = $provider->searchFolders($query);
+        foreach ($matches as $folder) {
+            $folders[$folder->id] = $folder;
+        }
 
-        return array_slice($folders, 0, $limit);
+        foreach ($matches as $folder) {
+            $this->appendSubfolders(
+                $provider,
+                $folder,
+                $folder->displayName ?: $folder->name,
+                $folders,
+                $visited,
+            );
+        }
+
+        return array_values($folders);
     }
 
     /**
@@ -124,5 +139,47 @@ class GoogleDriveService
     public function getFolderUrl(string $folderId): string
     {
         return "https://drive.google.com/drive/folders/{$folderId}";
+    }
+
+    /**
+     * @param array<string, DriveFolderDTO> $folders
+     * @param array<string, true> $visited
+     */
+    private function appendSubfolders(
+        GoogleDriveProvider $provider,
+        DriveFolderDTO $parent,
+        string $parentDisplayName,
+        array &$folders,
+        array &$visited,
+    ): void {
+        if (isset($visited[$parent->id])) {
+            return;
+        }
+
+        $visited[$parent->id] = true;
+
+        try {
+            $subfolders = $provider->listFolders($parent->id);
+        } catch (\Throwable) {
+            return;
+        }
+
+        foreach ($subfolders as $subfolder) {
+            $displayName = $parentDisplayName.' / '.$subfolder->name;
+            $folders[$subfolder->id] ??= new DriveFolderDTO(
+                id: $subfolder->id,
+                name: $subfolder->name,
+                parentId: $subfolder->parentId,
+                displayName: $displayName,
+            );
+
+            $this->appendSubfolders(
+                $provider,
+                $subfolder,
+                $displayName,
+                $folders,
+                $visited,
+            );
+        }
     }
 }

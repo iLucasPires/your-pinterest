@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Jobs\SyncGalleryDrivePermissions;
 use App\Models\Gallery\Gallery;
 
 use Database\Factories\ClientFactory;
@@ -33,18 +34,42 @@ class Client extends Model
         'notes',
     ];
 
+    protected static function booted(): void
+    {
+        static::updated(function (Client $client): void {
+            if ($client->wasChanged('email') && $client->photographer?->googleConnection) {
+                SyncGalleryDrivePermissions::dispatch($client->user_id)->afterCommit();
+            }
+        });
+
+        static::deleted(function (Client $client): void {
+            if ($client->photographer?->googleConnection) {
+                SyncGalleryDrivePermissions::dispatch($client->user_id)->afterCommit();
+            }
+        });
+    }
+
+    /** @return BelongsTo<User, $this> */
     public function photographer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->photographer();
     }
 
+    /** @return HasMany<Gallery, $this> */
     public function galleries(): HasMany
     {
         return $this->hasMany(Gallery::class);
+    }
+
+    /** @return BelongsTo<User, $this> */
+    public function clientAccount(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'client_user_id');
     }
 }

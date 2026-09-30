@@ -20,24 +20,7 @@
             />
         </x-slot:search>
 
-        <x-slot:actions>
-            @if($this->gallery->isProtected())
-                <form method="POST" action="{{ route('gallery.access.destroy', $this->gallery->slug) }}">
-                    @csrf
-                    @method('DELETE')
 
-                    <flux:button
-                        type="submit"
-                        icon="lock-closed"
-                        size="sm"
-                        variant="primary"
-                        class="rounded-full!"
-                    >
-                        <span class="hidden sm:inline">Bloquear</span>
-                    </flux:button>
-                </form>
-            @endif
-        </x-slot:actions>
     </x-gallery.header>
 
      @if ($this->tags->isNotEmpty())

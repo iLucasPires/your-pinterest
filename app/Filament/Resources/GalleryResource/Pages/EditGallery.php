@@ -3,8 +3,6 @@
 namespace App\Filament\Resources\GalleryResource\Pages;
 
 use App\Jobs\SyncGalleryJob;
-use App\Models\Gallery\Gallery;
-use App\Actions\Gallery\SetGalleryAccessCode;
 use App\Filament\Resources\GalleryResource;
 
 use Filament\Actions;
@@ -17,23 +15,23 @@ class EditGallery extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Actions\Action::make('photos')
+                ->label('Fotos')
+                ->icon('heroicon-o-photo')
+                ->color('gray')
+                ->url(fn(): string => GalleryResource::getUrl('photos', ['record' => $this->getRecord()])),
+
+            Actions\DeleteAction::make()
+                ->icon('heroicon-o-trash'),
         ];
     }
 
     protected function afterSave(): void
     {
-        /** @var Gallery $gallery */
         $gallery = $this->record;
+        $isFolderIdChanged = $gallery->wasChanged('drive_folder_id');
 
-        $plainCode = $this->data['access_code_plain'] ?? null;
-
-        if ($gallery->access_type === Gallery::ACCESS_CODE && $plainCode) {
-            app(SetGalleryAccessCode::class)->handle($gallery, $plainCode);
-        }
-
-        $originalFolderId = $this->record->getOriginal('drive_folder_id');
-        if ($gallery->drive_folder_id && $gallery->drive_folder_id !== $originalFolderId) {
+        if ($gallery->drive_folder_id && $isFolderIdChanged) {
             SyncGalleryJob::dispatch($gallery->id);
         }
     }

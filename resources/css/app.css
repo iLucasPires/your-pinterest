@@ -33,23 +33,16 @@
     --color-zinc-800: var(--color-taupe-800);
     --color-zinc-900: var(--color-taupe-900);
     --color-zinc-950: var(--color-taupe-950);
-
-    /* Application accent */
-    --color-accent: var(--color-taupe-800);
-    --color-accent-content: var(--color-taupe-800);
-    --color-accent-foreground: var(--color-white);
 }
 
 /* -------------------------------------------------------------------------- */
-/* Dark mode                                                                  */
+/* Light mode                                                                 */
 /* -------------------------------------------------------------------------- */
 
-@layer theme {
-    .dark {
-        --color-accent: var(--color-white);
-        --color-accent-content: var(--color-white);
-        --color-accent-foreground: var(--color-taupe-800);
-    }
+@theme {
+    --color-accent: var(--color-red-500);
+    --color-accent-content: var(--color-red-600);
+    --color-accent-foreground: var(--color-white);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -57,6 +50,7 @@
 /* -------------------------------------------------------------------------- */
 
 @layer base {
+
     *,
     ::after,
     ::before,
@@ -88,16 +82,6 @@
     }
 }
 
-.home-marquee {
-    animation: home-marquee 42s linear infinite;
-    will-change: transform;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .home-marquee {
-        animation: none;
-    }
-}
 
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
