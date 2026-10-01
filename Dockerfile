@@ -16,7 +16,6 @@ RUN apk add --no-cache \
 # Install PHP extensions
 RUN apk add --no-cache --virtual .php-build-deps $PHPIZE_DEPS \
     && docker-php-ext-install \
-    pdo \
     pdo_pgsql \
     mbstring \
     gd \
