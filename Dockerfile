@@ -3,28 +3,15 @@ FROM php:8.5-fpm-alpine
 # Install system dependencies
 RUN apk add --no-cache \
     curl \
-    libpng-dev \
-    libzip-dev \
-    oniguruma-dev \
-    postgresql-dev \
     zip \
     unzip \
     git \
     nodejs \
     npm
 
-# Install PHP extensions
-RUN apk add --no-cache --virtual .php-build-deps $PHPIZE_DEPS \
-    && docker-php-ext-install \
-    pdo_pgsql \
-    mbstring \
-    gd \
-    zip \
-    bcmath \
-    opcache \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
-    && apk del .php-build-deps
+# Install only PHP extensions not included in the PHP 8.5 image
+COPY --from=mlocati/php-extension-installer:2.12.0 /usr/bin/install-php-extensions /usr/local/bin/
+RUN install-php-extensions intl pdo_pgsql gd zip bcmath redis
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
