@@ -1,4 +1,4 @@
-FROM php:8.3-fpm-alpine
+FROM php:8.5-fpm-alpine
 
 # Install system dependencies
 RUN apk add --no-cache \
@@ -24,7 +24,10 @@ RUN docker-php-ext-install \
     opcache
 
 # Install Redis extension via pecl
-RUN pecl install redis && docker-php-ext-enable redis
+RUN apk add --no-cache --virtual .redis-build-deps $PHPIZE_DEPS \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
+    && apk del .redis-build-deps
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
