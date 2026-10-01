@@ -14,20 +14,18 @@ RUN apk add --no-cache \
     npm
 
 # Install PHP extensions
-RUN docker-php-ext-install \
+RUN apk add --no-cache --virtual .php-build-deps $PHPIZE_DEPS \
+    && docker-php-ext-install \
     pdo \
     pdo_pgsql \
     mbstring \
     gd \
     zip \
     bcmath \
-    opcache
-
-# Install Redis extension via pecl
-RUN apk add --no-cache --virtual .redis-build-deps $PHPIZE_DEPS \
+    opcache \
     && pecl install redis \
     && docker-php-ext-enable redis \
-    && apk del .redis-build-deps
+    && apk del .php-build-deps
 
 # Install Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
