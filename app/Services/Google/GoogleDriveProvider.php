@@ -12,6 +12,7 @@ use Google\Client;
 use Google\Service\Drive;
 use Google\Service\Drive\Permission;
 use Google\Service\Exception as GoogleServiceException;
+use GuzzleHttp\Client as GuzzleHttpClient;
 use RuntimeException;
 use Throwable;
 
@@ -42,6 +43,12 @@ class GoogleDriveProvider implements StorageProvider
             35 => 2,
             52 => 2,
         ]);
+        $client->setHttpClient(new GuzzleHttpClient([
+            'connect_timeout' => 15,
+            'read_timeout' => 300,
+            'stream' => true,
+            'timeout' => 600,
+        ]));
         $client->setClientId(config('services.google.client_id'));
         $client->setClientSecret(config('services.google.client_secret'));
         $client->setRedirectUri(config('services.google.redirect'));
@@ -220,7 +227,10 @@ class GoogleDriveProvider implements StorageProvider
      */
     public function download(string $fileId): mixed
     {
-        $response = $this->drive->files->get($fileId, ['alt' => 'media']);
+        $response = $this->drive->files->get($fileId, [
+            'alt' => 'media',
+            'supportsAllDrives' => true,
+        ]);
 
         return $response->getBody();
     }

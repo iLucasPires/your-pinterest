@@ -1,19 +1,28 @@
-@props(['gallery', 'tags', 'selectedTagId', 'photoCount'])
+@props(['gallery', 'photoCount', 'canDownload' => false])
 
 <header class="flex flex-col">
     {{-- Top bar --}}
-    <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-3 border-b px-4 py-3 sm:px-6 md:gap-4 md:px-8 lg:px-64 lg:py-4">
+    <div
+        class="flex flex-wrap items-center justify-between gap-x-3 gap-y-3 border-b px-4 py-3 sm:px-6 md:gap-4 md:px-8 lg:px-64 lg:py-4">
         {{-- Brand --}}
-         <flux:brand href="#" name="Sua Galeria">
+        <flux:brand href="#" name="Sua Galeria">
             <x-slot name="logo" class="bg-accent text-accent-foreground">
                 <flux:icon name="camera" variant="micro" />
             </x-slot>
         </flux:brand>
-       
+
 
         {{-- Search --}}
         <div class="order-3 w-full md:order-none md:flex md:max-w-xl">
-            {{ $search }}
+            <flux:input
+                id="photo-search-input"
+                type="search"
+                icon="magnifying-glass"
+                wire:model.live.debounce.300ms="search"
+                placeholder="Buscar por foto, tag ou nota..."
+                aria-label="Buscar fotos"
+                input:class="rounded-full!"
+            />
         </div>
 
         {{-- Visitor menu --}}
@@ -53,7 +62,8 @@
         </div>
     </div>
 
-    <div class="flex flex-col items-start gap-3 border-b px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between md:px-8 lg:px-64">
+    <div
+        class="flex flex-col items-start gap-3 border-b px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between md:px-8 lg:px-64">
         <div class="min-w-0">
             <flux:heading size="xl">
                 {{ $gallery->name }}
@@ -66,7 +76,8 @@
             @endif
         </div>
 
-        <div class="flex w-full flex-wrap items-center justify-between gap-2 pb-0 md:w-auto md:flex-nowrap md:justify-end md:pb-3">
+        <div
+            class="flex w-full flex-wrap items-center justify-between gap-2 pb-0 md:w-auto md:flex-nowrap md:justify-end md:pb-3">
             <flux:badge
                 rounded
                 size="lg"
@@ -75,6 +86,18 @@
             >
                 {{ $photoCount }} {{ Str::plural('foto', $photoCount) }}
             </flux:badge>
+
+            @if ($canDownload)
+                <flux:button
+                    :href="route('gallery.download', $gallery->slug)"
+                    icon="arrow-down-tray"
+                    size="sm"
+                    variant="outline"
+                    class="rounded-full!"
+                >
+                    Baixar galeria
+                </flux:button>
+            @endif
 
             <flux:button
                 type="button"

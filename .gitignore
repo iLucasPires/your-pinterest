@@ -43,3 +43,7 @@ yarn-error.log
 
 # Docker
 docker/volumes/
+
+**/caddy
+frankenphp
+frankenphp-worker.php

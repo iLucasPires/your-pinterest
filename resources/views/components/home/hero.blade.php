@@ -1,6 +1,4 @@
-@props(['recentGalleries', 'publicPhotos'])
-
-<section class="h-120 flex items-center justify-center">
+<section class="flex h-120 items-center justify-center">
     <div class="relative z-10 flex w-full flex-col items-center">
         <flux:heading class="text-5xl! font-bold!">
             Tirou foto comigo?
@@ -11,10 +9,8 @@
             os momentos que eternizamos juntos.
         </flux:text>
 
-        <div class="mt-10 w-full max-w-2xl">
+        <div id="gallery-search" class="mt-10 w-full max-w-2xl scroll-mt-6">
             <livewire:home.gallery-search />
         </div>
-
-        <x-home.recent-gallery :recent-galleries="$recentGalleries" />
     </div>
 </section>

@@ -26,6 +26,7 @@ Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
 // ── Public gallery routes ─────────────────────────────────────────────────────
 Route::prefix('g')->name('gallery.')->group(function () {
     Route::get('{slug}', [GalleryController::class, 'show'])->name('show');
+    Route::get('{slug}/download', [GalleryController::class, 'downloadArchive'])->name('download');
     Route::get('{slug}/login', [GalleryClientAuthController::class, 'show'])->name('login');
     Route::get(
         '{slug}/login/google', [GalleryClientAuthController::class, 'redirectToGoogle'])->name('login.google');

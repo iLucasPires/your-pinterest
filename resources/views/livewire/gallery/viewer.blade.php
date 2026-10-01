@@ -4,56 +4,39 @@
 >
     <x-gallery.header
         :gallery="$this->gallery"
-        :tags="$this->tags"
-        :selected-tag-id="$selectedTagId"
         :photo-count="$this->locked ? $this->totalPhotoCount : $this->photos->count()"
-    >
-        <x-slot:search>
-            <flux:input
-                id="photo-search-input"
-                type="search"
-                icon="magnifying-glass"
-                wire:model.live.debounce.300ms="search"
-                placeholder="Buscar por foto, tag ou nota..."
-                aria-label="Buscar fotos"
-                input:class="rounded-full!"
-            />
-        </x-slot:search>
+        :can-download="!$this->locked && $this->totalPhotoCount > 0"
+    />
 
-
-    </x-gallery.header>
-
-     @if ($this->tags->isNotEmpty())
-        <x-gallery.phototag-filter
-            :tags="$this->tags"
-            :selected-tag-id="$selectedTagId"
-        />
+    @if ($this->clientGalleries->count() > 1)
+        <nav
+            class="overflow-x-auto border-b px-4 sm:px-8"
+            aria-label="Galerias deste cliente"
+        >
+            <div class="flex min-w-max gap-2 py-3">
+                @foreach ($this->clientGalleries as $clientGallery)
+                    <flux:button
+                        :href="route('gallery.show', $clientGallery->slug)"
+                        :variant="$clientGallery->id === $this->galleryId ? 'primary' : 'outline'"
+                        :aria-current="$clientGallery->id === $this->galleryId ? 'page' : null"
+                        size="sm"
+                        class="rounded-full!"
+                        wire:key="client-gallery-{{ $clientGallery->id }}"
+                    >
+                        {{ $clientGallery->name }}
+                    </flux:button>
+                @endforeach
+            </div>
+        </nav>
     @endif
 
-    @if($this->locked)
-        <main class="p-3 sm:p-5 lg:p-6" aria-hidden="true">
-            <div class="columns-2 gap-3 sm:columns-3 sm:gap-4 lg:columns-4 lg:gap-5">
-                @for($index = 0; $index < $this->totalPhotoCount; $index++)
-                    <flux:skeleton
-                        wire:key="locked-gallery-photo-{{ $index }}"
-                        class="mb-3 aspect-[4/5] break-inside-avoid rounded-2xl blur-md sm:mb-4 lg:mb-5"
-                    />
-                @endfor
-            </div>
-        </main>
+    @if ($this->locked)
+        <x-gallery.grid-skeleton :total-photo-count="$this->totalPhotoCount" />
     @else
-        <x-gallery.photo-grid
+        <x-gallery.grid
             :photos="$this->photos"
             :total-photo-count="$this->totalPhotoCount"
-        >
-            @foreach($this->photos as $index => $photo)
-                <x-gallery.photo-card
-                    wire:key="gallery-photo-{{ $photo->id }}"
-                    :photo="$photo"
-                    :index="$index"
-                />
-            @endforeach
-        </x-gallery.photo-grid>
+        />
     @endif
 
     <x-gallery.lightbox wire:ignore />

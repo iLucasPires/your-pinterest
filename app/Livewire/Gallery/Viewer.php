@@ -25,9 +25,6 @@ class Viewer extends Component
     #[Validate('string|max:255')]
     public string $search = '';
 
-    #[Url(as: 'tag', except: 0)]
-    public int $selectedTagId = 0;
-
     public function mount(int $galleryId): void
     {
         $this->galleryId = $galleryId;
@@ -39,15 +36,6 @@ class Viewer extends Component
     public function updatedSearch(): void
     {
         $this->validateOnly('search');
-        $this->dispatchLightboxPhotos();
-    }
-
-    public function selectTag(int $tagId): void
-    {
-        abort_if($tagId < 0, 404);
-        abort_if($tagId > 0 && ! $this->tags->contains('id', $tagId), 404);
-
-        $this->selectedTagId = $tagId;
         $this->dispatchLightboxPhotos();
     }
 
@@ -73,6 +61,29 @@ class Viewer extends Component
         );
     }
 
+    /** @return Collection<int, GalleryModel> */
+    #[Computed]
+    public function clientGalleries(): Collection
+    {
+        $client = $this->gallery->client;
+
+        if ($client === null || $this->locked) {
+            return new Collection;
+        }
+
+        $access = app(GalleryAccessService::class);
+        $user = request()->user();
+        $session = request()->session();
+
+        return $client->galleries()
+            ->where('is_published', true)
+            ->with('client:id,user_id,email')
+            ->orderBy('name')
+            ->get(['id', 'user_id', 'client_id', 'name', 'slug', 'access_type'])
+            ->filter(fn (GalleryModel $gallery): bool => $access->canViewContent($gallery, $user, $session))
+            ->values();
+    }
+
     /** @return Collection<int, Photo> */
     #[Computed]
     public function photos(): Collection
@@ -83,7 +94,6 @@ class Viewer extends Component
 
         $query = $this->gallery->photos()->with('tags');
 
-        $this->applyTagFilter($query);
         $this->applySearch($query);
 
         return $query->get()->each(function (Photo $photo): void {
@@ -99,23 +109,6 @@ class Viewer extends Component
                 route('gallery.photo.download', [$this->gallery->slug, $photo->id]),
             );
         });
-    }
-
-    /** @return Collection<int, PhotoTag> */
-    #[Computed]
-    public function tags(): Collection
-    {
-        if ($this->locked) {
-            return new Collection;
-        }
-
-        $inThisGallery = fn (Builder $photos) => $photos->where('photos.gallery_id', $this->galleryId);
-
-        return PhotoTag::query()
-            ->whereHas('photos', $inThisGallery)
-            ->withCount(['photos as gallery_photo_count' => $inThisGallery])
-            ->orderBy('name')
-            ->get();
     }
 
     #[Computed]
@@ -162,15 +155,6 @@ class Viewer extends Component
     public function render(): View
     {
         return view('livewire.gallery.viewer');
-    }
-
-    private function applyTagFilter(Builder|Relation $query): void
-    {
-        if ($this->selectedTagId <= 0) {
-            return;
-        }
-
-        $query->whereHas('tags', fn (Builder $tags) => $tags->whereKey($this->selectedTagId));
     }
 
     private function applySearch(Builder|Relation $query): void
