@@ -1,7 +1,7 @@
 @props(['photo', 'index'])
 
 <flux:card
-    class="group relative mb-4 cursor-zoom-in break-inside-avoid overflow-hidden"
+    class="group relative mb-4 cursor-zoom-in break-inside-avoid overflow-hidden p-0"
     role="button"
     tabindex="0"
     aria-label="Abrir {{ $photo->filename }}"

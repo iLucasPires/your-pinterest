@@ -250,8 +250,10 @@ class GalleryPublicAccessTest extends TestCase
         $response
             ->assertOk()
             ->assertSee('aria-label="Galerias deste cliente"', false)
-            ->assertSee('href="'.route('gallery.show', $siblingGallery->slug).'"', false)
-            ->assertSee('aria-current="page"', false)
+            ->assertSee('value="'.route('gallery.show', $currentGallery->slug).'"', false)
+            ->assertSee('value="'.route('gallery.show', $siblingGallery->slug).'"', false)
+            ->assertSee('window.location.assign($event.target.value)', false)
+            ->assertSee('selected="selected"', false)
             ->assertDontSee('Private sibling')
             ->assertDontSee('Unpublished sibling')
             ->assertDontSee('Other client gallery');
@@ -282,7 +284,7 @@ class GalleryPublicAccessTest extends TestCase
 
         $response
             ->assertOk()
-            ->assertSee('href="'.route('gallery.show', $privateGallery->slug).'"', false)
+            ->assertSee('value="'.route('gallery.show', $privateGallery->slug).'"', false)
             ->assertSee('Authorized private gallery');
     }
 }
