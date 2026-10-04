@@ -1,0 +1,8 @@
+@import '../../../../vendor/filament/filament/resources/css/theme.css';
+@import '../../../../vendor/livewire/flux/dist/flux.css';
+
+@source '../../../../app/Filament/**/*';
+@source '../../../../vendor/livewire/flux/stubs/resources/views/flux/**/*.blade.php';
+@source '../../../../resources/views/pages/filament/**/*.blade.php';
+@source '../../../../resources/views/filament/pages/**/*.blade.php';
+@source '../../../../resources/views/filament/widgets/**/*.blade.php';

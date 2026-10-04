@@ -5,6 +5,7 @@ namespace App\Services\Google;
 use App\DTOs\DriveFolderDTO;
 use App\Models\User;
 use App\Services\Google\GoogleDriveProviderFactory;
+use Google\Service\Drive\AboutStorageQuota;
 
 /**
  * High-level service for Google Drive folder operations.
@@ -34,6 +35,11 @@ class GoogleDriveService
     public function hasConnection(User $user): bool
     {
         return $user->googleConnection !== null;
+    }
+
+    public function getStorageQuota(User $user): ?AboutStorageQuota
+    {
+        return $this->getProvider($user)->getStorageQuota();
     }
 
     /**

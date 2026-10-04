@@ -176,8 +176,21 @@ class GalleryResource extends Resource
         return Select::make('drive_folder_id')
             ->label('Google Drive Folder')
             ->placeholder('Search for a folder...')
+            ->live()
             ->searchable()
             ->searchDebounce(500)
+            ->afterStateUpdated(function (?string $state, Set $set): void {
+                $user = Auth::user();
+
+                if (blank($state) || ! $user) {
+                    $set('drive_folder_name', null);
+
+                    return;
+                }
+
+                $folder = app(GoogleDriveService::class)->getFolder($user, $state);
+                $set('drive_folder_name', $folder?->name);
+            })
             ->required()
             ->exists(false)
             ->unique(Gallery::class, 'drive_folder_id', ignoreRecord: true)

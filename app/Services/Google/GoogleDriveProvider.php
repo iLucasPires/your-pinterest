@@ -10,6 +10,7 @@ use App\Services\StorageProvider;
 
 use Google\Client;
 use Google\Service\Drive;
+use Google\Service\Drive\AboutStorageQuota;
 use Google\Service\Drive\Permission;
 use Google\Service\Exception as GoogleServiceException;
 use GuzzleHttp\Client as GuzzleHttpClient;
@@ -107,6 +108,13 @@ class GoogleDriveProvider implements StorageProvider
             fn($file) => DriveFolderDTO::fromGoogleFile($file),
             $files,
         );
+    }
+
+    public function getStorageQuota(): ?AboutStorageQuota
+    {
+        return $this->drive->about
+            ->get(['fields' => 'storageQuota'])
+            ->getStorageQuota();
     }
 
     /**

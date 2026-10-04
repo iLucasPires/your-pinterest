@@ -72,17 +72,6 @@
     @apply !mb-0 !leading-tight;
 }
 
-@keyframes home-marquee {
-    from {
-        transform: translateX(0);
-    }
-
-    to {
-        transform: translateX(calc(-50% - 0.5rem));
-    }
-}
-
-
 input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {

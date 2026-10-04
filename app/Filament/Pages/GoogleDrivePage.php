@@ -2,11 +2,12 @@
 
 namespace App\Filament\Pages;
 
-use BackedEnum;
-
+use App\Filament\Widgets\GoogleDriveStorageOverview;
 use App\Models\Google\GoogleConnection;
-
+use BackedEnum;
 use Filament\Pages\Page;
+use Filament\Widgets\Widget;
+use Illuminate\Contracts\View\View;
 
 class GoogleDrivePage extends Page
 {
@@ -25,5 +26,32 @@ class GoogleDrivePage extends Page
     public function getConnection(): ?GoogleConnection
     {
         return auth()->user()?->googleConnection;
+    }
+
+    public function getHeader(): ?View
+    {
+        return view('filament.pages.google-drive-header', [
+            'isConnected' => $this->getConnection() !== null,
+            'refreshUrl' => request()->fullUrl(),
+        ]);
+    }
+
+    /**
+     * @return array<class-string<Widget>>
+     */
+    protected function getHeaderWidgets(): array
+    {
+        if (! $this->getConnection()) {
+            return [];
+        }
+
+        return [
+            GoogleDriveStorageOverview::class,
+        ];
+    }
+
+    public function getHeaderWidgetsColumns(): int|array
+    {
+        return 1;
     }
 }
