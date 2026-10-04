@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\GoogleDrivePage;
 use App\Filament\Widgets\GalleryGrowthChart;
 use App\Filament\Widgets\GalleryStatsOverview;
+use Filament\Enums\ThemeMode;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -29,6 +30,8 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->darkMode(false)
+            ->defaultThemeMode(ThemeMode::Light)
             ->colors([
                 'primary' => Color::Amber,
             ])

@@ -15,6 +15,9 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @livewireStyles
+    <script>
+        window.localStorage.setItem('flux.appearance', 'light');
+    </script>
     @fluxAppearance
     @stack('head')
 </head>

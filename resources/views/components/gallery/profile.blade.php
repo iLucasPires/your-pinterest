@@ -26,22 +26,6 @@
                           Visualização da galeria
                       </flux:text>
                   </div>
-
-                  <flux:menu.separator />
-
-                  <flux:menu.item
-                      as="button"
-                      icon="sun"
-                      x-data
-                      x-on:click="$flux.dark = ! $flux.dark"
-                  >
-                      <span class="flex-1">Alterar tema</span>
-
-                      <span
-                          class="text-xs text-stone-500"
-                          x-text="$flux.appearance == 'light' ? 'Modo claro' : 'Modo escuro'"
-                      ></span>
-                  </flux:menu.item>
               </flux:menu>
           </flux:dropdown>
       </div>
