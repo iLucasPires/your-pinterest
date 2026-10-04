@@ -42,7 +42,7 @@
                                         class="tabular-nums">{{ number_format($storage['driveAllocationPercent'], 1) }}%</span>
                                 </x-slot>
                             </flux:label>
-                            <flux:progress :value="$storage['driveAllocationPercent']" color="amber" />
+                            <x-ui.progress-multi :value="$storage['driveAllocationPercent']" color="amber" />
                             <flux:description>
                                 {{ $storage['drive'] }}{{ $storage['usedPercent'] === null ? ' of current usage' : ' of plan storage' }}
                             </flux:description>
@@ -56,7 +56,7 @@
                                         class="tabular-nums">{{ number_format($storage['otherAllocationPercent'], 1) }}%</span>
                                 </x-slot>
                             </flux:label>
-                            <flux:progress :value="$storage['otherAllocationPercent']" color="blue" />
+                            <x-ui.progress-multi :value="$storage['otherAllocationPercent']" color="blue" />
                             <flux:description>
                                 {{ $storage['other'] }}{{ $storage['usedPercent'] === null ? ' of current usage' : ' of plan storage' }}
                             </flux:description>
@@ -71,7 +71,7 @@
                                     </span>
                                 </x-slot>
                             </flux:label>
-                            <flux:progress :value="$storage['availablePercent']" color="emerald" />
+                            <x-ui.progress-multi :value="$storage['availablePercent']" color="emerald" />
                             <flux:description>
                                 {{ $storage['usedPercent'] === null ? 'No fixed storage limit' : $storage['available'] . ' free' }}
                             </flux:description>

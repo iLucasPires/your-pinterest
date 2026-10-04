@@ -1,7 +1,7 @@
 @props(['photo', 'index'])
 
-<flux:card
-    class="group relative mb-4 cursor-zoom-in break-inside-avoid overflow-hidden p-0"
+<div
+    class="group relative cursor-zoom-in self-start overflow-hidden rounded-md p-0"
     role="button"
     tabindex="0"
     aria-label="Abrir {{ $photo->filename }}"
@@ -17,14 +17,14 @@
         onerror="this.onerror = null; this.src = '{{ asset('images/photo-pending.svg') }}'"
     >
 
-    <div class="absolute left-4 top-4">
+    <div class="absolute right-4 top-4">
         <flux:button
             href="{w{ $photo->download_url }}"
-            class="opacity-0 transition group-hover:opacity-100"
+            class="rounded-full! opacity-0 transition group-hover:opacity-100"
             icon="arrow-down-tray"
-            variant="primary"
+            variant="filled"
             aria-label="Baixar foto"
             x-on:click.stop
         />
     </div>
-</flux:card>
+</div>

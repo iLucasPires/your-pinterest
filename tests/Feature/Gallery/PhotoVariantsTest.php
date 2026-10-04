@@ -65,9 +65,29 @@ class PhotoVariantsTest extends TestCase
         }
 
         $this->assertNull($photo->local_path);
+        $this->assertNull($photo->exif_metadata);
         $this->assertCount(2, Storage::disk('photos')->allFiles());
         $this->assertTrue($photo->variantsAreCurrent());
         $job->handle($factory, new PhotoVariantGenerator); // download expected once
+    }
+
+    public function test_exif_metadata_is_saved_with_generated_variants(): void
+    {
+        $photo = $this->photo();
+
+        (new GeneratePhotoVariants($photo->id, $photo->variantSourceHash()))
+            ->handle($this->downloadFactory($this->jpegWithExif()), new PhotoVariantGenerator);
+
+        $this->assertEquals([
+            'camera_make' => 'Canon',
+            'camera_model' => 'EOS R5',
+            'lens' => 'RF 50mm F1.8 STM',
+            'iso' => 200,
+            'aperture' => 2.8,
+            'shutter_speed' => '1/125',
+            'focal_length_mm' => 50.0,
+            'captured_at' => '2026:10:04 10:30:00',
+        ], $photo->fresh()->exif_metadata);
     }
 
     public function test_small_images_are_not_upscaled(): void
@@ -370,5 +390,58 @@ class PhotoVariantsTest extends TestCase
         imagedestroy($image);
 
         return $bytes;
+    }
+
+    private function jpegWithExif(): string
+    {
+        $make = "Canon\0";
+        $model = "EOS R5\0";
+        $date = "2026:10:04 10:30:00\0";
+        $lens = "RF 50mm F1.8 STM\0";
+        $ifd0Offset = 8;
+        $ifd0Length = 2 + 3 * 12 + 4;
+        $makeOffset = $ifd0Offset + $ifd0Length;
+        $modelOffset = $makeOffset + strlen($make);
+        $exifOffset = $modelOffset + strlen($model);
+        $exifLength = 2 + 6 * 12 + 4;
+        $fNumberOffset = $exifOffset + $exifLength;
+        $exposureOffset = $fNumberOffset + 8;
+        $focalLengthOffset = $exposureOffset + 8;
+        $dateOffset = $focalLengthOffset + 8;
+        $lensOffset = $dateOffset + strlen($date);
+
+        $entry = static fn (int $tag, int $type, int $count, string $value): string =>
+            pack('v2V', $tag, $type, $count) . str_pad($value, 4, "\0");
+        $offsetEntry = static fn (int $tag, int $type, int $count, int $offset): string =>
+            $entry($tag, $type, $count, pack('V', $offset));
+
+        $ifd0 = pack('v', 3)
+            . $offsetEntry(0x010F, 2, strlen($make), $makeOffset)
+            . $offsetEntry(0x0110, 2, strlen($model), $modelOffset)
+            . $offsetEntry(0x8769, 4, 1, $exifOffset)
+            . pack('V', 0)
+            . $make
+            . $model;
+
+        $exif = pack('v', 6)
+            . $entry(0x829A, 5, 1, pack('V', $exposureOffset))
+            . $entry(0x829D, 5, 1, pack('V', $fNumberOffset))
+            . $offsetEntry(0x9003, 2, strlen($date), $dateOffset)
+            . $entry(0x8827, 3, 1, pack('v', 200))
+            . $entry(0x920A, 5, 1, pack('V', $focalLengthOffset))
+            . $offsetEntry(0xA434, 2, strlen($lens), $lensOffset)
+            . pack('V', 0)
+            . pack('V2', 28, 10)
+            . pack('V2', 1, 125)
+            . pack('V2', 50, 1)
+            . $date
+            . $lens;
+
+        $tiff = 'II' . pack('vV', 42, $ifd0Offset) . $ifd0 . $exif;
+        $payload = "Exif\0\0" . $tiff;
+        $app1 = "\xFF\xE1" . pack('n', strlen($payload) + 2) . $payload;
+        $jpeg = $this->jpeg(100, 75);
+
+        return substr($jpeg, 0, 2) . $app1 . substr($jpeg, 2);
     }
 }

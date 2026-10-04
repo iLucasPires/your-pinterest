@@ -1,5 +1,4 @@
 <div
-    {{ $attributes }}
     aria-modal="true"
     aria-label="Visualizador de fotos"
     class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-stone-950/95 p-4 backdrop-blur-md sm:p-6"

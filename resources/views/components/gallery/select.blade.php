@@ -3,18 +3,17 @@
     'clientGalleries' => [],
 ])
 
-<flux:select
-    aria-label="Galerias deste cliente"
-    size="sm"
-    class="w-full sm:max-w-xs"
-    x-on:change="if ($event.target.value) window.location.assign($event.target.value)"
->
+<ul class="flex flex-wrap gap-2">
     @foreach ($clientGalleries as $clientGallery)
-        <flux:select.option
+        <flux:button
+            class="rounded-full!"
+            size="sm"
             :value="route('gallery.show', $clientGallery->slug)"
             :selected="$clientGallery->id === $galleryId"
+            :variant="$clientGallery->id === $galleryId ? 'primary' : null"
+            x-on:click="window.location.assign('{{ route('gallery.show', $clientGallery->slug) }}')"
         >
             {{ $clientGallery->name }}
-        </flux:select.option>
+        </flux:button>
     @endforeach
-</flux:select>
+</ul>

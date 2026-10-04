@@ -79,6 +79,7 @@ class GeneratePhotoVariants implements ShouldBeUnique, ShouldQueue
         $target = Utils::streamFor($temporary);
         $source = null;
         $paths = [];
+        $variantPaths = [];
         $published = false;
 
         try {
@@ -98,6 +99,10 @@ class GeneratePhotoVariants implements ShouldBeUnique, ShouldQueue
                 throw new RuntimeException('Unable to locate temporary image file.');
             }
             $paths = $generator->generate($temporaryPath, $directory);
+            $variantPaths = array_intersect_key($paths, [
+                'thumbnail_path' => true,
+                'preview_path' => true,
+            ]);
 
             $published = DB::transaction(function () use ($paths): bool {
                 $current = Photo::query()
@@ -122,8 +127,8 @@ class GeneratePhotoVariants implements ShouldBeUnique, ShouldQueue
             $target->close();
             $source?->close();
 
-            if (! $published && $paths) {
-                Storage::disk(config('photos.disk'))->delete(array_values($paths));
+            if (! $published && $variantPaths) {
+                Storage::disk(config('photos.disk'))->delete(array_values($variantPaths));
             }
         }
     }

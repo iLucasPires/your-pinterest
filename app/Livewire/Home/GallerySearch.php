@@ -5,6 +5,7 @@ namespace App\Livewire\Home;
 use App\Models\Gallery\Gallery;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -53,14 +54,14 @@ class GallerySearch extends Component
                     ->orWhere('slug', 'like', "%{$search}%")
                     ->orWhereHas('client', function ($clientQuery) use ($search): void {
                         $clientQuery->where('name', 'like', "%{$search}%");
-                });
+                    });
             })
             ->latest('published_at')
             ->limit(8)
             ->get();
     }
 
-    public function render(): \Illuminate\View\View
+    public function render(): View
     {
         return view('livewire.home.gallery-search');
     }

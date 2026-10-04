@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Storage;
  * @property string|null $thumbnail_path
  * @property string|null $preview_path
  * @property string|null $variants_source_hash
+ * @property array<string, int|float|string>|null $exif_metadata
  * @property Carbon|null $drive_modified_at
  * @property Carbon|null $local_drive_modified_at
  * @property string|null $notes
@@ -49,6 +50,7 @@ class Photo extends Model
         'thumbnail_path',
         'preview_path',
         'variants_source_hash',
+        'exif_metadata',
         'drive_modified_at',
         'local_drive_modified_at',
         'notes',
@@ -67,6 +69,7 @@ class Photo extends Model
             'notes' => 'string',
             'rating' => 'integer',
             'sort_order' => 'integer',
+            'exif_metadata' => 'array',
         ];
     }
 
@@ -82,6 +85,7 @@ class Photo extends Model
     public function variantSourceHash(): string
     {
         return hash('sha256', json_encode([
+            'variant_generator_version' => 2,
             $this->drive_file_id,
             $this->drive_modified_at?->format('Y-m-d H:i:s.u'),
             $this->size,

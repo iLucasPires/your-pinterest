@@ -22,7 +22,7 @@
     @stack('head')
 </head>
 
-<body class="min-h-full antialiased bg-taupe-50">
+<body class="min-h-full bg-zinc-50 antialiased">
     @yield('content')
     @stack('scripts')
     @livewireScripts

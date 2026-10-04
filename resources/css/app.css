@@ -20,6 +20,7 @@
 /* Theme                                                                      */
 /* -------------------------------------------------------------------------- */
 
+
 @theme {
     /* Flux zinc → taupe */
     --color-zinc-50: var(--color-taupe-50);
@@ -38,11 +39,10 @@
 /* -------------------------------------------------------------------------- */
 /* Light mode                                                                 */
 /* -------------------------------------------------------------------------- */
-
 @theme {
-    --color-accent: var(--color-red-500);
-    --color-accent-content: var(--color-red-600);
-    --color-accent-foreground: var(--color-white);
+    --color-accent: var(--color-amber-400);
+    --color-accent-content: var(--color-amber-600);
+    --color-accent-foreground: var(--color-amber-950);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -79,4 +79,8 @@ input:focus[data-flux-control],
 textarea:focus[data-flux-control],
 select:focus[data-flux-control] {
     @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+}
+
+.gallery-masonry {
+    grid-auto-rows: 1px;
 }

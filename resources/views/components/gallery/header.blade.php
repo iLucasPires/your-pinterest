@@ -5,35 +5,24 @@
     <div
         class="flex flex-wrap items-center justify-between gap-x-3 gap-y-3 border-b px-4 py-3 sm:px-6 md:gap-4 md:px-8 lg:px-64 lg:py-4">
         {{-- Brand --}}
-        <flux:brand
-            href="#"
-            name="Sua Galeria"
-        >
-            <x-slot
-                name="logo"
-                class="bg-accent text-accent-foreground"
-            >
-                <flux:icon
-                    name="camera"
-                    variant="micro"
-                />
+        <flux:brand href="#" name="Sua Galeria">
+            <x-slot name="logo" class="bg-accent text-accent-foreground">
+                <flux:icon name="camera" variant="micro" />
             </x-slot>
         </flux:brand>
 
 
 
         {{-- Profile --}}
-        <x-gallery.profile :gallery="$gallery" />
+        <x-user.profile :gallery="$gallery" />
     </div>
 
     <div
         class="flex flex-col items-start gap-3 border-b px-4 py-4 sm:px-6 md:flex-row md:items-center md:justify-between md:px-8 lg:px-64">
-        @if ($this->clientGalleries->count() > 1)
-            <x-gallery.select
-                :gallery-id="$this->gallery->id"
-                :client-galleries="$this->clientGalleries"
-            />
-        @endif
+
+        <flux:heading class="text-xl">
+            {{ $gallery->name }}
+        </flux:heading>
 
         <div
             class="flex w-full flex-wrap items-center justify-between gap-2 pb-0 md:w-auto md:flex-nowrap md:justify-end md:pb-3">
