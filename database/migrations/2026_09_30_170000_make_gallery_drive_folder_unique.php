@@ -11,6 +11,7 @@ return new class extends Migration
     {
         $hasDuplicates = DB::table('galleries')
             ->whereNotNull('drive_folder_id')
+            ->select('drive_folder_id')
             ->groupBy('drive_folder_id')
             ->havingRaw('COUNT(*) > 1')
             ->exists();
