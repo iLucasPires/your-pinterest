@@ -6,13 +6,13 @@ use App\Actions\Gallery\SyncGalleryFromDrive;
 use App\DTOs\DriveFileDTO;
 use App\Jobs\DeletePhotoFiles;
 use App\Jobs\GeneratePhotoVariants;
+use App\Models\Client;
 use App\Models\Gallery\Gallery;
 use App\Models\Gallery\Photo;
 use App\Models\User;
 use App\Services\Gallery\PhotoVariantGenerator;
 use App\Services\Google\GoogleDriveProvider;
 use App\Services\Google\GoogleDriveProviderFactory;
-use GuzzleHttp\Psr7\Utils;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -26,9 +26,27 @@ class PhotoVariantsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['photos.disk' => 'photos']);
         Storage::fake('photos');
         Storage::fake('gallery_photos');
         Queue::fake();
+    }
+
+    public function test_photo_variants_use_the_configured_filesystem_disk(): void
+    {
+        config(['photos.disk' => 's3']);
+        Storage::fake('s3');
+
+        $photo = $this->photo();
+        (new GeneratePhotoVariants($photo->id, $photo->variantSourceHash()))
+            ->handle($this->downloadFactory($this->jpeg(100, 75)), new PhotoVariantGenerator);
+
+        $photo->refresh();
+
+        Storage::disk('s3')->assertExists($photo->thumbnail_path);
+        Storage::disk('s3')->assertExists($photo->preview_path);
+        $this->assertTrue($photo->variantsAreCurrent());
+        $this->assertEmpty(Storage::disk('photos')->allFiles());
     }
 
     public function test_job_generates_webp_variants_and_skips_duplicate_processing(): void
@@ -163,7 +181,7 @@ class PhotoVariantsTest extends TestCase
             $this->get($url)->assertForbidden();
         }
 
-        $client = \App\Models\Client::factory()->create(['user_id' => $photo->gallery->user_id, 'email' => 'download@example.test']);
+        $client = Client::factory()->create(['user_id' => $photo->gallery->user_id, 'email' => 'download@example.test']);
         $photo->gallery->update(['client_id' => $client->id]);
         $this->actingAs(User::factory()->create(['email' => $client->email]));
         foreach (['thumbnail' => 'thumb', 'preview' => 'preview'] as $variant => $bytes) {
@@ -242,7 +260,7 @@ class PhotoVariantsTest extends TestCase
         })->andReturnUsing(fn ($path, $stream, $options) => $disk->writeStream($path, $stream, $options));
         $failingDisk->shouldReceive('writeStream')->once()->withArgs(function ($path) {
             return str_ends_with($path, '/thumbnail.webp');
-        })->andThrow(new \RuntimeException('storage unavailable'));
+        })->andReturn(false);
         Storage::set('photos', $failingDisk);
 
         try {
@@ -250,7 +268,7 @@ class PhotoVariantsTest extends TestCase
                 ->handle($this->downloadFactory($this->jpeg(100, 75)), new PhotoVariantGenerator);
             $this->fail('Expected storage failure');
         } catch (\RuntimeException $exception) {
-            $this->assertSame('storage unavailable', $exception->getMessage());
+            $this->assertSame('Unable to store generated photo variant.', $exception->getMessage());
         }
         $this->assertEmpty($disk->allFiles());
         $this->assertNull($photo->fresh()->variants_source_hash);

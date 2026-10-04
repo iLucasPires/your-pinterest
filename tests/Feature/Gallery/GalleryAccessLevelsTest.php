@@ -22,6 +22,7 @@ class GalleryAccessLevelsTest extends TestCase
 
     public function test_photo_preview_uses_local_copy_without_calling_google(): void
     {
+        config(['photos.disk' => 'photos']);
         Storage::fake('photos');
 
         $owner = User::factory()->create();

@@ -45,7 +45,9 @@ class PhotoVariantGenerator
                 $stream = $encoded->toStream();
 
                 try {
-                    $disk->writeStream($paths[$variant.'_path'], $stream, ['visibility' => 'private']);
+                    if ($disk->writeStream($paths[$variant.'_path'], $stream, ['visibility' => 'private']) === false) {
+                        throw new \RuntimeException('Unable to store generated photo variant.');
+                    }
                 } finally {
                     fclose($stream);
                 }
