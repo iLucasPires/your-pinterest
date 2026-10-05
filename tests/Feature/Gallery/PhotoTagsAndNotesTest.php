@@ -89,4 +89,34 @@ class PhotoTagsAndNotesTest extends TestCase
         $response->assertSee('Momento do parabéns');
         $response->assertSee('★ 4');
     }
+
+    public function test_lightbox_receives_photo_exif_metadata(): void
+    {
+        $user = User::factory()->create();
+        $gallery = Gallery::create([
+            'user_id' => $user->id,
+            'name' => 'Ensaio',
+            'slug' => 'ensaio-exif',
+            'is_published' => true,
+            'access_type' => Gallery::ACCESS_PUBLIC,
+        ]);
+
+        Photo::create([
+            'gallery_id' => $gallery->id,
+            'drive_file_id' => 'drive_exif',
+            'filename' => 'camera.jpg',
+            'exif_metadata' => [
+                'camera_make' => 'Canon',
+                'camera_model' => 'EOS R5',
+                'lens' => 'RF 50mm F1.8 STM',
+                'iso' => 200,
+            ],
+        ]);
+
+        $response = $this->get(route('gallery.show', $gallery->slug));
+
+        $response->assertOk();
+        $response->assertSee('EOS R5');
+        $response->assertSee('RF 50mm F1.8 STM');
+    }
 }

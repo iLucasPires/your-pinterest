@@ -12,6 +12,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -34,6 +35,60 @@ class PhotosRelationManager extends RelationManager
                 TextInput::make('filename')
                     ->label('Nome do Arquivo')
                     ->disabled(),
+
+                Section::make('Dados da câmera')
+                    ->schema([
+                        TextInput::make('exif_metadata.camera_make')
+                            ->label('Fabricante')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->placeholder('Não informado'),
+
+                        TextInput::make('exif_metadata.camera_model')
+                            ->label('Câmera')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->placeholder('Não informado'),
+
+                        TextInput::make('exif_metadata.lens')
+                            ->label('Lente')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->placeholder('Não informado'),
+
+                        TextInput::make('exif_metadata.iso')
+                            ->label('ISO')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->placeholder('Não informado'),
+
+                        TextInput::make('exif_metadata.aperture')
+                            ->label('Abertura')
+                            ->formatStateUsing(fn (mixed $state): ?string => is_numeric($state) ? 'f/' . $state : null)
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->placeholder('Não informado'),
+
+                        TextInput::make('exif_metadata.shutter_speed')
+                            ->label('Velocidade do obturador')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->placeholder('Não informado'),
+
+                        TextInput::make('exif_metadata.focal_length_mm')
+                            ->label('Distância focal (mm)')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->placeholder('Não informado'),
+
+                        TextInput::make('exif_metadata.captured_at')
+                            ->label('Data da captura')
+                            ->disabled()
+                            ->dehydrated(false)
+                            ->placeholder('Não informado'),
+                    ])
+                    ->columns(2)
+                    ->columnSpanFull(),
 
                 Select::make('rating')
                     ->label('Classificação / Nota (1 a 5 estrelas)')

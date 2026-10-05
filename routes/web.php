@@ -29,7 +29,9 @@ Route::prefix('g')->name('gallery.')->group(function () {
     Route::get('{slug}/download', [GalleryController::class, 'downloadArchive'])->name('download');
     Route::get('{slug}/login', [GalleryClientAuthController::class, 'show'])->name('login');
     Route::get(
-        '{slug}/login/google', [GalleryClientAuthController::class, 'redirectToGoogle'])->name('login.google');
+        '{slug}/login/google',
+        [GalleryClientAuthController::class, 'redirectToGoogle']
+    )->name('login.google');
     Route::get('{slug}/photo/{photo}/download', [GalleryController::class, 'download'])->name('photo.download');
     Route::get('{slug}/photo/{photo}/preview', [GalleryController::class, 'preview'])->name('photo.preview');
     Route::get('{slug}/photo/{photo}/thumbnail', [GalleryController::class, 'thumbnail'])->name('photo.thumbnail');

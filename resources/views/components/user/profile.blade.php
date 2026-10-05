@@ -14,6 +14,15 @@
                     Visualização da galeria
                 </flux:text>
             </div>
+            <flux:menu.separator />
+
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+
+                <flux:menu.item type="submit" icon="arrow-right-start-on-rectangle">
+                    Sair
+                </flux:menu.item>
+            </form>
         </flux:menu>
     </flux:dropdown>
 </div>

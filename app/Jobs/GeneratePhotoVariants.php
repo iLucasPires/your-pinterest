@@ -113,6 +113,9 @@ class GeneratePhotoVariants implements ShouldBeUnique, ShouldQueue
                     return false;
                 }
 
+                $metadata = array_replace($current->exif_metadata ?? [], $paths['exif_metadata'] ?? []);
+                $paths['exif_metadata'] = $metadata === [] ? null : $metadata;
+
                 $current->update($paths + [
                     'variants_source_hash' => $this->sourceHash,
                 ]);
@@ -129,6 +132,7 @@ class GeneratePhotoVariants implements ShouldBeUnique, ShouldQueue
 
             if (! $published && $variantPaths) {
                 Storage::disk(config('photos.disk'))->delete(array_values($variantPaths));
+                DeletePhotoFiles::dispatch($photo->gallery_id, $photo->id)->afterCommit();
             }
         }
     }

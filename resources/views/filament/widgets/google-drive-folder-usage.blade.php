@@ -60,17 +60,11 @@
                         <div class="flex min-w-0 items-start gap-3">
                             <div
                                 class="text-primary-600 dark:text-primary-400 grid size-10 shrink-0 place-items-center rounded-xl bg-gray-100 dark:bg-white/10">
-                                <flux:icon
-                                    icon="folder"
-                                    variant="micro"
-                                />
+                                <flux:icon icon="folder" variant="micro" />
                             </div>
                             <div class="min-w-0 space-y-1">
                                 <div class="flex flex-wrap items-center gap-2">
-                                    <flux:heading
-                                        class="truncate"
-                                        size="sm"
-                                    >
+                                    <flux:heading class="truncate" size="sm">
                                         {{ $folder['name'] }}
                                     </flux:heading>
                                     @if ($folder['photoCount'] > 0)
@@ -118,8 +112,7 @@
                                 class="h-2.5 overflow-hidden rounded-full bg-gray-200 dark:bg-white/10"
                                 role="progressbar"
                             >
-                                <div
-                                    class="bg-primary-500 h-full rounded-full transition-all"
+                                <div class="bg-primary-500 h-full rounded-full transition-all"
                                     style="width: {{ $folder['scalePercent'] }}%"
                                 ></div>
                             </div>

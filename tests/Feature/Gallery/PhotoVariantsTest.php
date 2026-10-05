@@ -90,6 +90,18 @@ class PhotoVariantsTest extends TestCase
         ], $photo->fresh()->exif_metadata);
     }
 
+    public function test_generation_preserves_drive_exif_when_original_has_no_exif(): void
+    {
+        $photo = $this->photo();
+        $metadata = ['camera_make' => 'Canon', 'iso' => 200];
+        $photo->update(['exif_metadata' => $metadata]);
+
+        (new GeneratePhotoVariants($photo->id, $photo->variantSourceHash()))
+            ->handle($this->downloadFactory($this->jpeg(100, 75)), new PhotoVariantGenerator);
+
+        $this->assertSame($metadata, $photo->fresh()->exif_metadata);
+    }
+
     public function test_small_images_are_not_upscaled(): void
     {
         $photo = $this->photo();

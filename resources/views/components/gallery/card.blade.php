@@ -19,10 +19,9 @@
 
     <div class="absolute right-4 top-4">
         <flux:button
-            href="{w{ $photo->download_url }}"
+            href="{{ $photo->download_url }}"
             class="rounded-full! opacity-0 transition group-hover:opacity-100"
             icon="arrow-down-tray"
-            variant="filled"
             aria-label="Baixar foto"
             x-on:click.stop
         />

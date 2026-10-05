@@ -64,6 +64,10 @@ class SyncGalleryFromDrive
                     'sort_order' => $index,
                 ];
 
+                if ($file->exifMetadata !== null) {
+                    $data['exif_metadata'] = array_replace($photo?->exif_metadata ?? [], $file->exifMetadata);
+                }
+
                 if ($photo) {
                     $photo->update($data);
                     $updated++;

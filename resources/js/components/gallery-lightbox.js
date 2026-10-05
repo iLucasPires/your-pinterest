@@ -64,6 +64,46 @@ export default function galleryLightbox(initialPhotos = []) {
             return this.allPhotos[this.current] ?? null;
         },
 
+        currentExifEntries() {
+            const metadata = this.currentPhoto()?.exif_metadata;
+
+            if (!metadata) return [];
+
+            const entries = [];
+            const camera = [metadata.camera_make, metadata.camera_model]
+                .filter(Boolean)
+                .join(' ');
+
+            if (camera) {
+                entries.push({ label: 'Câmera', value: camera });
+            }
+            if (metadata.lens) {
+                entries.push({ label: 'Lente', value: metadata.lens });
+            }
+
+            if (metadata.iso) {
+                entries.push({ label: 'ISO', value: metadata.iso });
+            }
+
+            if (metadata.aperture) {
+                entries.push({ label: 'Abertura', value: `f/${metadata.aperture}` });
+            }
+
+            if (metadata.shutter_speed) {
+                entries.push({ label: 'Exposição', value: `${metadata.shutter_speed} s` });
+            }
+
+            if (metadata.focal_length_mm) {
+                entries.push({ label: 'Distância focal', value: `${metadata.focal_length_mm} mm` });
+            }
+
+            if (metadata.captured_at) {
+                entries.push({ label: 'Capturada em', value: metadata.captured_at });
+            }
+
+            return entries;
+        },
+
         lightboxSource() {
             if (!this.lightboxOpen) return null;
 

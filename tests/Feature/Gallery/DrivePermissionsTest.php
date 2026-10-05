@@ -29,7 +29,7 @@ class DrivePermissionsTest extends TestCase
             'access_type' => Gallery::ACCESS_PRIVATE, 'client_id' => $client->id, 'drive_folder_id' => 'folder',
         ]);
         $provider = Mockery::mock(GoogleDriveProvider::class);
-        $provider->shouldReceive('syncPublicAccess')->with('folder', false)->twice()->andReturnNull();
+        $provider->shouldNotReceive('syncPublicAccess');
         $factory = Mockery::mock(GoogleDriveProviderFactory::class);
         $factory->shouldReceive('make')->andReturn($provider);
         $provider->shouldReceive('readerPermission')->with('folder', 'first@example.test')->once()->andReturnNull();
@@ -74,7 +74,7 @@ class DrivePermissionsTest extends TestCase
         ]);
 
         $gallery->update(['access_type' => Gallery::ACCESS_PRIVATE]);
-        $provider->shouldReceive('syncPublicAccess')->with('folder', false)->twice()->andReturnNull();
+        $provider->shouldReceive('syncPublicAccess')->with('folder', false)->once()->andReturnNull();
         $provider->shouldReceive('readerPermission')->with('folder', $client->email)->once()->andReturnNull();
         $provider->shouldReceive('grantReader')->with('folder', $client->email)->once()->andReturn('client-id');
         $job->handle($factory);
@@ -122,5 +122,50 @@ class DrivePermissionsTest extends TestCase
         $this->expectException(QueryException::class);
 
         Gallery::factory()->for($owner)->create(['drive_folder_id' => 'folder']);
+    }
+
+    public function test_private_gallery_without_client_or_previous_grants_does_not_contact_drive(): void
+    {
+        Queue::fake();
+        $owner = User::factory()->create();
+        Gallery::factory()->for($owner)->create([
+            'drive_folder_id' => 'folder',
+            'access_type' => Gallery::ACCESS_PRIVATE,
+            'client_id' => null,
+        ]);
+        $factory = Mockery::mock(GoogleDriveProviderFactory::class);
+        $factory->shouldNotReceive('make');
+
+        (new SyncGalleryDrivePermissions($owner->id))->handle($factory);
+
+        $this->assertDatabaseCount('gallery_drive_permissions', 0);
+    }
+
+    public function test_unmanaged_previous_grant_is_not_revoked(): void
+    {
+        Queue::fake();
+        $owner = User::factory()->create();
+        Gallery::factory()->for($owner)->create([
+            'drive_folder_id' => 'folder',
+            'access_type' => Gallery::ACCESS_PRIVATE,
+            'client_id' => null,
+        ]);
+        DB::table('gallery_drive_permissions')->insert([
+            'user_id' => $owner->id,
+            'folder_id' => 'folder',
+            'email' => 'previous@example.test',
+            'permission_id' => 'manual',
+            'managed' => false,
+        ]);
+        $provider = Mockery::mock(GoogleDriveProvider::class);
+        $provider->shouldNotReceive('syncPublicAccess');
+        $provider->shouldNotReceive('readerPermission');
+        $provider->shouldNotReceive('revokeReader');
+        $factory = Mockery::mock(GoogleDriveProviderFactory::class);
+        $factory->shouldReceive('make')->once()->andReturn($provider);
+
+        (new SyncGalleryDrivePermissions($owner->id))->handle($factory);
+
+        $this->assertDatabaseCount('gallery_drive_permissions', 0);
     }
 }

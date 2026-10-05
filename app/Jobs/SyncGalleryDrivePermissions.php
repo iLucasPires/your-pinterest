@@ -93,20 +93,10 @@ class SyncGalleryDrivePermissions implements ShouldQueue
             ->where('user_id', $user->id)
             ->get();
 
-        if ($galleries->isEmpty() && $records->isEmpty()) {
+        if ($desired === [] && $records->isEmpty()) {
             return;
         }
         $provider = $factory->make($user);
-
-        // Revoke public links even when they predate the application's tracking records.
-        foreach ($galleries as $gallery) {
-            $folderId = $gallery->drive_folder_id;
-            $publicKey = $folderId . '|' . self::PUBLIC_PERMISSION;
-
-            if ($folderId && ! isset($desired[$publicKey])) {
-                $provider->syncPublicAccess($folderId, false);
-            }
-        }
 
         // Revoke only grants created by this application, and only when no gallery needs them.
         foreach ($records as $record) {

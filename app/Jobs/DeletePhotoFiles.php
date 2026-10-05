@@ -7,6 +7,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\Storage;
+use RuntimeException;
 
 class DeletePhotoFiles implements ShouldQueue
 {
@@ -37,6 +38,17 @@ class DeletePhotoFiles implements ShouldQueue
 
         $directory = "galleries/{$this->galleryId}/photos/{$this->photoId}";
 
+        if (! $photo) {
+            if (! $disk->deleteDirectory($directory)) {
+                throw new RuntimeException('Unable to delete photo directory.');
+            }
+
+            // Also removes the parent folders if the gallery was deleted.
+            (new DeleteGalleryFiles($this->galleryId))->handle();
+
+            return;
+        }
+
         $keep = $photo
             ? array_filter([
                 $photo->thumbnail_path,
@@ -49,7 +61,9 @@ class DeletePhotoFiles implements ShouldQueue
         );
 
         if ($obsolete) {
-            $disk->delete($obsolete);
+            if (! $disk->delete($obsolete)) {
+                throw new RuntimeException('Unable to delete obsolete photo files.');
+            }
         }
     }
 }

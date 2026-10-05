@@ -2,6 +2,7 @@
 
 namespace App\Models\Gallery;
 
+use App\Jobs\DeleteGalleryFiles;
 use App\Jobs\SyncGalleryDrivePermissions;
 use App\Models\Client;
 use App\Models\User;
@@ -98,6 +99,8 @@ class Gallery extends Model
         });
 
         static::deleted(function (Gallery $gallery): void {
+            DeleteGalleryFiles::dispatch($gallery->id)->afterCommit();
+
             if ($gallery->photographer?->googleConnection) {
                 SyncGalleryDrivePermissions::dispatch($gallery->user_id)->afterCommit();
             }

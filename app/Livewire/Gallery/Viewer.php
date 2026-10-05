@@ -135,6 +135,7 @@ class Viewer extends Component
                     'id' => $photo->id,
                     'filename' => $photo->filename,
                     'notes' => $photo->notes,
+                    'exif_metadata' => $photo->exif_metadata,
                     'tags' => $photo->tags
                         ->map(fn (PhotoTag $tag): array => [
                             'id' => $tag->id,

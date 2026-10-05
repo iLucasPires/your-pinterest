@@ -5,6 +5,7 @@ namespace Tests\Feature\Gallery;
 use App\Actions\Gallery\SyncGalleryFromDrive;
 use App\DTOs\DriveFileDTO;
 use App\Jobs\GeneratePhotoVariants;
+use App\Jobs\SyncGalleryJob;
 use App\Models\Gallery\Gallery;
 use App\Models\Gallery\Photo;
 use App\Models\User;
@@ -87,6 +88,52 @@ class SyncGalleryTest extends TestCase
         $this->assertEquals(1, $result->removed);
 
         $this->assertDatabaseMissing('photos', ['drive_file_id' => 'deleted-file']);
+    }
+
+    public function test_sync_job_saves_drive_exif_for_existing_photos(): void
+    {
+        $user = User::factory()->create();
+        $gallery = Gallery::factory()->for($user)->withFolder('folder')->create();
+        $photo = Photo::create([
+            'gallery_id' => $gallery->id,
+            'drive_file_id' => 'file-1',
+            'filename' => 'photo.jpg',
+            'exif_metadata' => ['lens' => 'Existing lens'],
+        ]);
+        $file = new \Google\Service\Drive\DriveFile([
+            'id' => 'file-1',
+            'name' => 'photo.jpg',
+            'mimeType' => 'image/jpeg',
+            'imageMediaMetadata' => [
+                'cameraMake' => 'Canon',
+                'cameraModel' => 'EOS R5',
+                'isoSpeed' => 200,
+                'aperture' => 2.8,
+                'exposureTime' => 0.008,
+                'focalLength' => 50.0,
+                'time' => '2026:10:04 10:30:00',
+            ],
+        ]);
+        $this->mockDriveProvider($user, [DriveFileDTO::fromGoogleFile($file)]);
+
+        (new SyncGalleryJob($gallery->id))->handle(app(SyncGalleryFromDrive::class));
+
+        $this->assertEquals([
+            'camera_make' => 'Canon',
+            'camera_model' => 'EOS R5',
+            'lens' => 'Existing lens',
+            'iso' => 200,
+            'aperture' => 2.8,
+            'shutter_speed' => '0.008',
+            'focal_length_mm' => 50.0,
+            'captured_at' => '2026:10:04 10:30:00',
+        ], $photo->fresh()->exif_metadata);
+
+        $file->setImageMediaMetadata(new \Google\Service\Drive\DriveFileImageMediaMetadata);
+        $this->mockDriveProvider($user, [DriveFileDTO::fromGoogleFile($file)]);
+        (new SyncGalleryJob($gallery->id))->handle(app(SyncGalleryFromDrive::class));
+
+        $this->assertSame('Canon', $photo->fresh()->exif_metadata['camera_make']);
     }
 
     public function test_sync_updates_metadata_for_existing_photos(): void
